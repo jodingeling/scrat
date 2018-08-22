@@ -8,5 +8,5 @@ artifacts:
     - index.html
     - favicon.ico
     - readme.md
-    - stales/main.css
+    - styles/main.css
     - images/*
