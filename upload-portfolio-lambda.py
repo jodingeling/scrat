@@ -16,19 +16,30 @@ def lambda_handler(event, context):
     #s3 = session.resource('s3')
 
     s3 = boto3.resource('s3', config=Config(signature_version='s3v4'))
+    sns = boto3.resource('sns')
+    topic = sns.Topic('arn:aws:sns:us-east-1:491875279524:jut-myPortfolioDeploymentTopic')
+
+    try:
+
+        myoriginbucket = s3.Bucket('jut-virginia-serverless')
+        mytargetbucket = s3.Bucket('jutzi.awstt.xyz')
+        mymemory = StringIO.StringIO()
+
+        myoriginbucket.download_fileobj('portfoliobuild.zip', mymemory)
+
+        with zipfile.ZipFile(mymemory) as myzip:
+            for nm in myzip.namelist():
+                obj = myzip.open(nm)
+                mytargetbucket.upload_fileobj(obj, nm,
+                ExtraArgs={'ContentType': mimetypes.guess_type(nm)[0]})
+                mytargetbucket.Object(nm).Acl().put(ACL='public-read')
+
+        topic.publish(Subject='jutEduc: update was successful', Message='jutEduc: update was successful')
+
+    except:
+        topic.publish(Subject='jutEduc: update not successful', Message='jutEduc: update not successful')
+        raise
 
 
-    myoriginbucket = s3.Bucket('jut-virginia-serverless')
-    mytargetbucket = s3.Bucket('jutzi.awstt.xyz')
-    mymemory = StringIO.StringIO()
-
-    myoriginbucket.download_fileobj('portfoliobuild.zip', mymemory)
-
-    with zipfile.ZipFile(mymemory) as myzip:
-        for nm in myzip.namelist():
-            obj = myzip.open(nm)
-            mytargetbucket.upload_fileobj(obj, nm,
-            ExtraArgs={'ContentType': mimetypes.guess_type(nm)[0]})
-            mytargetbucket.Object(nm).Acl().put(ACL='public-read')
     # TODO implement
-    return 'Program ingnition by Lambda'
+    return 'Greetings from Lambda'
