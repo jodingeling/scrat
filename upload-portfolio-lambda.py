@@ -1,24 +1,34 @@
 import boto3
+#23aug18jut: the next line imports botocore.client Config and has to be flagged out when code runs in session mode from local
+from botocore.client import Config
 import StringIO
 import zipfile
 import mimetypes
 
 
-
-session = boto3.session.Session(profile_name='globi')
-s3 = session.resource('s3')
+def lambda_handler(event, context):
 
 
 
-myoriginbucket = s3.Bucket('jut-virginia-serverless')
-mytargetbucket = s3.Bucket('jutzi.awstt.xyz')
-mymemory = StringIO.StringIO()
+    #23aug18jut: this is the session handling used when python is called from local (cli)
+    #23aug18jut: s3 allocation by boto3 needs to be done by additional Config parms, see also import section of this code
+    #session = boto3.session.Session(profile_name='globi')
+    #s3 = session.resource('s3')
 
-myoriginbucket.download_fileobj('portfoliobuild.zip', mymemory)
+    s3 = boto3.resource('s3', config=Config(signature_version='s3v4'))
 
-with zipfile.ZipFile(mymemory) as myzip:
-    for nm in myzip.namelist():
-        obj = myzip.open(nm)
-        mytargetbucket.upload_fileobj(obj, nm,
-        ExtraArgs={'ContentType': mimetypes.guess_type(nm)[0]})
-        mytargetbucket.Object(nm).Acl().put(ACL='public-read')
+
+    myoriginbucket = s3.Bucket('jut-virginia-serverless')
+    mytargetbucket = s3.Bucket('jutzi.awstt.xyz')
+    mymemory = StringIO.StringIO()
+
+    myoriginbucket.download_fileobj('portfoliobuild.zip', mymemory)
+
+    with zipfile.ZipFile(mymemory) as myzip:
+        for nm in myzip.namelist():
+            obj = myzip.open(nm)
+            mytargetbucket.upload_fileobj(obj, nm,
+            ExtraArgs={'ContentType': mimetypes.guess_type(nm)[0]})
+            mytargetbucket.Object(nm).Acl().put(ACL='public-read')
+    # TODO implement
+    return 'Program ingnition by Lambda'
