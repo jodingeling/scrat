@@ -11,7 +11,7 @@ s3 = session.resource('s3')
 
 
 myoriginbucket = s3.Bucket('jut-virginia-serverless')
-mytargetbucket = s3.Bucket('jut-virginia')
+mytargetbucket = s3.Bucket('jutzi.awstt.xyz')
 mymemory = StringIO.StringIO()
 
 myoriginbucket.download_fileobj('portfoliobuild.zip', mymemory)
